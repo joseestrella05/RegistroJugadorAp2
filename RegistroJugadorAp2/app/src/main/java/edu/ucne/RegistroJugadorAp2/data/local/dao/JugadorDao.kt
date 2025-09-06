@@ -23,4 +23,7 @@ interface JugadorDao {
 
     @Query("DELETE FROM Jugadores WHERE JugadorId = :id")
     suspend fun deleteById(id: Int)
+
+    @Query("SELECT COUNT(*) > 0 FROM Jugadores WHERE nombres = :nombre")
+    suspend fun existeNombre(nombre: String): Boolean
 }

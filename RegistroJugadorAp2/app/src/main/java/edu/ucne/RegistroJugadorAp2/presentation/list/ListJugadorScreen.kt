@@ -98,7 +98,7 @@ fun JugadorCard(
             TextButton(
                 onClick = { load(jugador.jugadorId) },
                 modifier = Modifier.testTag("delete_button_${jugador.jugadorId}")
-            ) { Text("editar") }
+            ) { Text("Editar") }
 
             TextButton(
                 onClick = { onDelete(jugador.jugadorId) },

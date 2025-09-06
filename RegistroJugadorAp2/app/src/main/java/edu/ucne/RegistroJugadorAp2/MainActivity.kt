@@ -33,7 +33,7 @@ class MainActivity : ComponentActivity() {
                         TopAppBar(
                             title = {
                                 Text(
-                                    text = "Lista de jugadores",
+                                    text = "Registro de jugadores",
                                     style = MaterialTheme.typography.titleLarge
                                 )
                             },

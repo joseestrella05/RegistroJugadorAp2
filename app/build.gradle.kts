@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.registrojugadorestic_tac_toe"
+    namespace = "edu.ucne.RegistroJugadorAp2"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.registrojugadorestic_tac_toe"
+        applicationId = "edu.ucne.RegistroJugadorAp2"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

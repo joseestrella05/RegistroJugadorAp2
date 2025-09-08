@@ -50,19 +50,16 @@ class MainActivity : ComponentActivity() {
                         startDestination = Routes.List,
                         modifier = Modifier.padding(paddingValues)
                     ) {
-                        // LISTA
+
                         composable(Routes.List) {
-                            // 👇 Lee el mensaje que dejó EDIT usando StateFlow (sin LiveData)
                             val backEntry by navController.currentBackStackEntryAsState()
                             val savedStateHandle = backEntry?.savedStateHandle
 
-                            // Obtenemos un StateFlow<String> con valor inicial ""
                             val msgFlow = remember(savedStateHandle) {
                                 savedStateHandle?.getStateFlow("snackbar_msg", "")
                             }
                             val msgFromEdit by msgFlow?.collectAsState() ?: remember { mutableStateOf("") }
 
-                            // Si hay mensaje, mostrar y limpiar
                             LaunchedEffect(msgFromEdit) {
                                 if (msgFromEdit.isNotEmpty()) {
                                     snackbarHostState.showSnackbar(msgFromEdit)
@@ -77,7 +74,6 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        // EDITAR / CREAR
                         composable(
                             route = "${Routes.Edit}/{jugadorId}",
                             arguments = listOf(
@@ -91,7 +87,6 @@ class MainActivity : ComponentActivity() {
 
                             EditJugadorScreen(
                                 jugadorId = jugadorId,
-                                // Envía mensaje a la entrada anterior y vuelve
                                 onBackWithMessage = { message ->
                                     navController.previousBackStackEntry
                                         ?.savedStateHandle

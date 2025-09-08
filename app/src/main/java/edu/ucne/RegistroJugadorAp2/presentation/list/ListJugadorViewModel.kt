@@ -5,11 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import edu.ucne.RegistroJugadorAp2.domain.usecase.DeleteJugadorUseCase
 import edu.ucne.RegistroJugadorAp2.domain.usecase.ObserveJugadorUseCase
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -32,26 +28,45 @@ class ListJugadorViewModel @Inject constructor(
             is ListJugadorUiEvent.Delete -> onDelete(event.jugadorId)
             ListJugadorUiEvent.CreateNew -> _state.update { it.copy(navigateToCreate = true) }
             is ListJugadorUiEvent.Edit -> _state.update { it.copy(navigateToEditId = event.jugadorId) }
-            is ListJugadorUiEvent.ShowMessage -> _state.update { it.copy(message = event.message) }
+            is ListJugadorUiEvent.ShowMessage -> _state.update { it.copy(mensaje = event.message) }
         }
     }
 
     private fun observe() {
         viewModelScope.launch {
             observeJugadoresUseCase().collectLatest { list ->
-                _state.update { it.copy(isLoading = false, jugadores = list, message = null) }
+                _state.update {
+                    it.copy(
+                        jugadores = list,
+                        isLoading = false,
+                        mensaje = null
+                    )
+                }
             }
         }
     }
 
     private fun onDelete(id: Int) {
         viewModelScope.launch {
-            deleteJugadorUseCase(id)
-            onEvent(ListJugadorUiEvent.ShowMessage("Jugador eliminado"))
+            try {
+                deleteJugadorUseCase(id)
+                onEvent(ListJugadorUiEvent.ShowMessage("Jugador eliminado"))
+            } catch (e: Exception) {
+                onEvent(ListJugadorUiEvent.ShowMessage("Error al eliminar: ${e.localizedMessage}"))
+            }
         }
     }
 
     fun onNavigationHandled() {
-        _state.update { it.copy(navigateToCreate = false, navigateToEditId = null) }
+        _state.update {
+            it.copy(
+                navigateToCreate = false,
+                navigateToEditId = null
+            )
+        }
+    }
+
+    fun clearMensaje() {
+        _state.update { it.copy(mensaje = null) }
     }
 }

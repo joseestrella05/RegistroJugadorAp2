@@ -4,18 +4,18 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import dagger.hilt.android.AndroidEntryPoint
+import edu.ucne.RegistroJugadorAp2.presentation.Routes
 import edu.ucne.RegistroJugadorAp2.presentation.edit.EditJugadorScreen
 import edu.ucne.RegistroJugadorAp2.presentation.list.ListJugadorScreen
 import edu.ucne.RegistroJugadorAp2.ui.theme.RegistroJugadorAp2Theme
@@ -28,7 +28,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             RegistroJugadorAp2Theme {
-                Scaffold (
+                val navController = rememberNavController()
+                val snackbarHostState = remember { SnackbarHostState() }
+
+                Scaffold(
                     topBar = {
                         TopAppBar(
                             title = {
@@ -36,21 +39,69 @@ class MainActivity : ComponentActivity() {
                                     text = "Registro de jugadores",
                                     style = MaterialTheme.typography.titleLarge
                                 )
-                            },
+                            }
                         )
                     },
-                ){
-                    Column (
-                        modifier = Modifier.fillMaxSize()
-                            .padding(it)
+                    snackbarHost = { SnackbarHost(snackbarHostState) }
+                ) { paddingValues ->
+
+                    NavHost(
+                        navController = navController,
+                        startDestination = Routes.List,
+                        modifier = Modifier.padding(paddingValues)
                     ) {
-                        EditJugadorScreen()
-                        ListJugadorScreen()
+                        // LISTA
+                        composable(Routes.List) {
+                            // 👇 Lee el mensaje que dejó EDIT usando StateFlow (sin LiveData)
+                            val backEntry by navController.currentBackStackEntryAsState()
+                            val savedStateHandle = backEntry?.savedStateHandle
+
+                            // Obtenemos un StateFlow<String> con valor inicial ""
+                            val msgFlow = remember(savedStateHandle) {
+                                savedStateHandle?.getStateFlow("snackbar_msg", "")
+                            }
+                            val msgFromEdit by msgFlow?.collectAsState() ?: remember { mutableStateOf("") }
+
+                            // Si hay mensaje, mostrar y limpiar
+                            LaunchedEffect(msgFromEdit) {
+                                if (msgFromEdit.isNotEmpty()) {
+                                    snackbarHostState.showSnackbar(msgFromEdit)
+                                    savedStateHandle?.set("snackbar_msg", "")
+                                }
+                            }
+
+                            ListJugadorScreen(
+                                onNavigateToEdit = { jugadorId ->
+                                    navController.navigate("${Routes.Edit}/$jugadorId")
+                                }
+                            )
+                        }
+
+                        // EDITAR / CREAR
+                        composable(
+                            route = "${Routes.Edit}/{jugadorId}",
+                            arguments = listOf(
+                                navArgument("jugadorId") {
+                                    type = NavType.IntType
+                                    defaultValue = 0
+                                }
+                            )
+                        ) { backEntry ->
+                            val jugadorId = backEntry.arguments?.getInt("jugadorId") ?: 0
+
+                            EditJugadorScreen(
+                                jugadorId = jugadorId,
+                                // Envía mensaje a la entrada anterior y vuelve
+                                onBackWithMessage = { message ->
+                                    navController.previousBackStackEntry
+                                        ?.savedStateHandle
+                                        ?.set("snackbar_msg", message)
+                                    navController.popBackStack()
+                                }
+                            )
+                        }
                     }
-
                 }
-
-
             }
         }
     }

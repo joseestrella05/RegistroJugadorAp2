@@ -79,7 +79,6 @@ class EditJugadorViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true) }
 
-            //  Validación de nombre duplicado
             val duplicado = existeNombreUseCase(nombres)
 
             if (duplicado) {
@@ -127,5 +126,13 @@ class EditJugadorViewModel @Inject constructor(
             deleteJugadorUseCase(id)
             _state.update { it.copy(isDeleting = false, deleted = true) }
         }
+    }
+
+    fun onSaveHandled() {
+        _state.update { it.copy(saved = false) }
+    }
+
+    fun onDeleteHandled() {
+        _state.update { it.copy(deleted = false) }
     }
 }

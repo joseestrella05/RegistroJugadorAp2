@@ -5,6 +5,7 @@ import androidx.room.RoomDatabase
 import edu.ucne.RegistroJugadorAp2.data.local.dao.JugadorDao
 import edu.ucne.RegistroJugadorAp2.data.local.entities.JugadorEntity
 
+
 @Database(
     entities = [
         JugadorEntity::class
@@ -14,5 +15,5 @@ import edu.ucne.RegistroJugadorAp2.data.local.entities.JugadorEntity
 )
 
 abstract  class JugadorDatabase : RoomDatabase(){
-    abstract fun JugadorDao(): JugadorDao
+    abstract fun JugadorDao():JugadorDao
 }

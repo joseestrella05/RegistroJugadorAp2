@@ -120,6 +120,7 @@ fun PlayerSelectionScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DropdownJugador(
     label: String,
@@ -127,30 +128,61 @@ fun DropdownJugador(
     selected: Jugador?,
     onSelected: (Jugador) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var showSheet by remember { mutableStateOf(false) }
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Text(label, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(6.dp))
-        OutlinedButton(onClick = { expanded = true }) {
+
+        OutlinedButton(
+            onClick = { showSheet = true },
+            modifier = Modifier.fillMaxWidth(0.8f)
+        ) {
             Text(selected?.nombres ?: "Seleccionar jugador")
         }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
+    }
+
+    if (showSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showSheet = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ) {
-            if (jugadores.isEmpty()) {
-                DropdownMenuItem(text = { Text("No hay jugadores") }, onClick = { expanded = false })
-            } else {
-                jugadores.forEach { jugador ->
-                    DropdownMenuItem(
-                        text = { Text(jugador.nombres) },
-                        onClick = {
-                            onSelected(jugador)
-                            expanded = false
-                        }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "Elige un jugador",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                if (jugadores.isEmpty()) {
+                    Text(
+                        text = "No hay jugadores registrados",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
+                } else {
+                    jugadores.forEach { jugador ->
+                        ListItem(
+                            headlineContent = { Text(jugador.nombres) },
+                            supportingContent = { Text("Partidas: ${jugador.partidas}") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onSelected(jugador)
+                                    showSheet = false
+                                }
+                        )
+                        Divider()
+                    }
                 }
+                Spacer(Modifier.height(16.dp))
             }
         }
     }

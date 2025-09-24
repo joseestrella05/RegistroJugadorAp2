@@ -4,9 +4,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Games
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -25,6 +30,7 @@ fun ListJugadorScreen(
     onNavigateToPartidas: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var selectedItem by remember { mutableStateOf(0) } // para controlar selección de la barra
 
     if (state.navigateToCreate) {
         onNavigateToCreate()
@@ -40,35 +46,37 @@ fun ListJugadorScreen(
         topBar = {
             TopAppBar(title = { Text("Lista de jugadores") })
         },
-        floatingActionButton = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp), // espacio entre botones
-                horizontalAlignment = Alignment.End
-            ) {
-                // FAB para agregar jugador
-                FloatingActionButton(
-                    onClick = { viewModel.onEvent(ListJugadorUiEvent.CreateNew) },
-                    modifier = Modifier.testTag("fab_create_jugador")
-                ) {
-                    Text("+")
-                }
-
-                // FAB para jugar TicTacToe
-                FloatingActionButton(
-                    onClick = { onNavigateToTicTacToe() },
-                    modifier = Modifier.testTag("fab_play_tictactoe")
-                ) {
-                    Text("🎮")
-                }
-                FloatingActionButton(
-                    onClick = { onNavigateToPartidas() },
-                    modifier = Modifier.testTag("fab_view_partidas")
-                ) {
-                    Text("📜")
-                }
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    selected = selectedItem == 0,
+                    onClick = {
+                        selectedItem = 0
+                        viewModel.onEvent(ListJugadorUiEvent.CreateNew)
+                    },
+                    icon = { Icon(Icons.Default.Add, contentDescription = "Agregar") },
+                    label = { Text("Nuevo") }
+                )
+                NavigationBarItem(
+                    selected = selectedItem == 1,
+                    onClick = {
+                        selectedItem = 1
+                        onNavigateToTicTacToe()
+                    },
+                    icon = { Icon(Icons.Default.Games, contentDescription = "Jugar") },
+                    label = { Text("Juego") }
+                )
+                NavigationBarItem(
+                    selected = selectedItem == 2,
+                    onClick = {
+                        selectedItem = 2
+                        onNavigateToPartidas()
+                    },
+                    icon = { Icon(Icons.Default.List, contentDescription = "Partidas") },
+                    label = { Text("Partidas") }
+                )
             }
         }
-
     ) { padding ->
         if (state.isLoading) {
             Box(
@@ -111,43 +119,65 @@ fun ListJugadorScreen(
     }
 }
 
-
 @Composable
 fun JugadorCard(
     jugador: Jugador,
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
-    Card(
+    ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .clickable { onClick() }
-            .testTag("jugador_card_${jugador.jugadorId}")
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .clickable { onClick() },
+        shape = MaterialTheme.shapes.medium,
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            // 📌 Info del jugador
             Column(modifier = Modifier.weight(1f)) {
-                Text(jugador.nombres, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = jugador.nombres,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
                 Spacer(modifier = Modifier.height(4.dp))
-                Text("Partidas: ${jugador.partidas}")
+                Text(
+                    text = "Partidas: ${jugador.partidas}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
-            TextButton(
-                onClick = onClick,
-                modifier = Modifier.testTag("edit_button_${jugador.jugadorId}")
-            ) { Text("Editar") }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                IconButton(
+                    onClick = onClick,
+                    modifier = Modifier.testTag("edit_button_${jugador.jugadorId}")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Editar",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
 
-            Spacer(modifier = Modifier.width(8.dp))
-
-            TextButton(
-                onClick = onDelete,
-                modifier = Modifier.testTag("delete_button_${jugador.jugadorId}")
-            ) { Text("Eliminar") }
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.testTag("delete_button_${jugador.jugadorId}")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Eliminar",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
         }
     }
 }

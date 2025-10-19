@@ -1,4 +1,4 @@
-package edu.ucne.RegistroJugadorAp2.presentation.edit
+package edu.ucne.RegistroJugadorAp2.presentation.jugador.edit
 
 data class EditJugadorUiState(
     val jugadorId: Int? = null,

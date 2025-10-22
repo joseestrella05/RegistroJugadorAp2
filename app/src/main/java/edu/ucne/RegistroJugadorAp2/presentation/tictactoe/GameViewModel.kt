@@ -1,10 +1,13 @@
 package edu.ucne.RegistroJugadorAp2.presentation.tictactoe
 
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import edu.ucne.RegistroJugadorAp2.data.remote.MovimientosApi
 import edu.ucne.RegistroJugadorAp2.domain.model.Jugador
+import edu.ucne.RegistroJugadorAp2.domain.model.MovimientoDto
 import edu.ucne.RegistroJugadorAp2.domain.usecase.ObserveJugadorUseCase
 import edu.ucne.RegistroJugadorAp2.domain.usecasepartida.InsertPartidaUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,11 +31,15 @@ data class GameUiState(
 @HiltViewModel
 class GameViewModel @Inject constructor(
     private val observeJugadoresUseCase: ObserveJugadorUseCase,
-    private val insertPartidaUseCase: InsertPartidaUseCase
+    private val insertPartidaUseCase: InsertPartidaUseCase,
+    private val movimientosApi: MovimientosApi
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(GameUiState())
     val state: StateFlow<GameUiState> = _state.asStateFlow()
+
+    private val _tablero = MutableStateFlow(Array(3) { Array(3) { "" } })
+    val tablero: StateFlow<Array<Array<String>>> = _tablero
 
     init {
         viewModelScope.launch {
@@ -150,4 +157,48 @@ class GameViewModel @Inject constructor(
             }
         }
     }
+    fun cargarMovimientosDesdeApi() {
+        viewModelScope.launch {
+            try {
+                val movimientos = movimientosApi.getMovimientos()
+
+                val nuevoTablero = Array(3) { Array(3) { "" } }
+
+                movimientos.forEach { movimiento ->
+                    val fila = movimiento.posicionFila
+                    val columna = movimiento.posicionColumna
+
+                    if (fila in 0..2 && columna in 0..2) {
+                        nuevoTablero[fila][columna] = movimiento.jugador
+                    }
+                }
+
+                _tablero.value = nuevoTablero
+
+            } catch (e: Exception) {
+                Log.e("GameViewModel", "Error al cargar movimientos", e)
+            }
+        }
+    }
+
+
+    fun enviarMovimiento(jugador: String, fila: Int, columna: Int) {
+        viewModelScope.launch {
+            try {
+                val nuevoMovimiento = MovimientoDto(
+                    movimientoId = 0,
+                    jugador = jugador,
+                    posicionFila = fila,
+                    posicionColumna = columna
+                )
+
+                movimientosApi.postMovimiento(nuevoMovimiento)
+                cargarMovimientosDesdeApi()
+
+            } catch (e: Exception) {
+                Log.e("GameViewModel", "Error al enviar movimiento", e)
+            }
+        }
+    }
+
 }

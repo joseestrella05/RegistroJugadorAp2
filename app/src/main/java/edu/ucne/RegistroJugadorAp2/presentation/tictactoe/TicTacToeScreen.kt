@@ -28,6 +28,52 @@ fun TicTacToeScreen(
     viewModel: GameViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val tablero by viewModel.tablero.collectAsStateWithLifecycle() // <- Nuevo
+
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Button(onClick = { viewModel.cargarMovimientosDesdeApi() }) {
+                Text("Cargar API")
+            }
+        }
+
+        tablero.forEachIndexed { filaIndex, fila ->
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                fila.forEachIndexed { colIndex, valor ->
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .padding(4.dp)
+                            .background(Color.LightGray)
+                            .clickable {
+                                if (valor.isEmpty()) {
+                                    viewModel.enviarMovimiento("X", filaIndex, colIndex) // <- POST aquí
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = valor,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = when (valor) {
+                                "X" -> Color(0xFF0D47A1)
+                                "O" -> Color(0xFFD32F2F)
+                                else -> Color.Black
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+    }
 
     TicTacToeBody(
         state = state,

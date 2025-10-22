@@ -25,10 +25,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             RegistroJugadorAp2Theme {
-                // Creamos el navController
                 val navController = rememberNavController()
 
-                // Usamos nuestro NavHost personalizado
                 RegistroJugadoresNavHost(navController)
             }
         }

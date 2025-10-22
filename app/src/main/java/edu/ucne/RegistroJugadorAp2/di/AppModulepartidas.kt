@@ -9,6 +9,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import edu.ucne.RegistroJugadorAp2.data.local.database.AppDatabase
+import edu.ucne.RegistroJugadorAp2.data.remote.MovimientosApi
 import edu.ucne.RegistroJugadorAp2.data.repository.PartidasRepositoryImpl
 import edu.ucne.RegistroJugadorAp2.domain.repository.PartidaRepository
 import edu.ucne.RegistroJugadorAp2.domain.usecasepartida.DeletePartidaUseCase
@@ -16,7 +17,11 @@ import edu.ucne.RegistroJugadorAp2.domain.usecasepartida.GetAllPartidasUseCase
 import edu.ucne.RegistroJugadorAp2.domain.usecasepartida.GetPartidaUseCase
 import edu.ucne.RegistroJugadorAp2.domain.usecasepartida.InsertPartidaUseCase
 import edu.ucne.RegistroJugadorAp2.domain.usecasepartida.ObservePartidasUseCase
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+
 import javax.inject.Singleton
+
 
 @Suppress("unused")
 @InstallIn(SingletonComponent::class)
@@ -55,4 +60,17 @@ object AppModulepartidas {
     @Provides
     @Singleton
     fun provideObservePartidasUseCase(repo: PartidaRepository) = ObservePartidasUseCase(repo)
+
+    @Provides
+    fun provideRetrofit(): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl("https://gestionhuacalesapi.azurewebsites.net/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    @Provides
+    fun provideMovimientosApi(retrofit: Retrofit): MovimientosApi {
+        return retrofit.create(MovimientosApi::class.java)
+    }
 }

@@ -1,4 +1,4 @@
-package edu.ucne.RegistroJugadorAp2.domain.model
+package edu.ucne.RegistroJugadorAp2.data.remote.dto
 
 data class MovimientoDto(
     val movimientoId: Int,

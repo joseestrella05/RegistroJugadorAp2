@@ -32,32 +32,36 @@ object AppModule {
             .build()
 
     @Provides
-    fun provideJugadorDao(jugadorDatabase: JugadorDatabase ) = jugadorDatabase.JugadorDao()
+    fun provideJugadorDao(jugadorDatabase: JugadorDatabase) = jugadorDatabase.JugadorDao()
 
     @Provides
     @Singleton
-    fun provideGetJugadorUseCase(jugadorRepository: JugadorRepository) : GetJugadorUseCase{
+    fun provideGetJugadorUseCase(jugadorRepository: JugadorRepository): GetJugadorUseCase {
         return GetJugadorUseCase(jugadorRepository)
     }
+
     @Provides
     @Singleton
-    fun provideObserveJugadorUseCase(jugadorRepository: JugadorRepository) : ObserveJugadorUseCase{
+    fun provideObserveJugadorUseCase(jugadorRepository: JugadorRepository): ObserveJugadorUseCase {
         return ObserveJugadorUseCase(jugadorRepository)
     }
+
     @Provides
     @Singleton
-    fun provideUpsertJugadorUseCase(jugadorRepository: JugadorRepository) : UpsertJugadorUseCase{
+    fun provideUpsertJugadorUseCase(jugadorRepository: JugadorRepository): UpsertJugadorUseCase {
         return UpsertJugadorUseCase(jugadorRepository)
     }
+
     @Provides
     @Singleton
-    fun provideDeleteJugadorUseCase(jugadorRepository: JugadorRepository) : DeleteJugadorUseCase{
+    fun provideDeleteJugadorUseCase(jugadorRepository: JugadorRepository): DeleteJugadorUseCase {
         return DeleteJugadorUseCase(jugadorRepository)
     }
 
     @Provides
     @Singleton
-    fun provideJugadorRepository(jugadorDao: JugadorDao): JugadorRepository{
+    fun provideJugadorRepository(jugadorDao: JugadorDao): JugadorRepository {
         return JugadorRepositoryImpl(jugadorDao)
     }
+
 }

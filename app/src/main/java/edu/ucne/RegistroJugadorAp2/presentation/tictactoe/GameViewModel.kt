@@ -6,8 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import edu.ucne.RegistroJugadorAp2.data.remote.MovimientosApi
+import edu.ucne.RegistroJugadorAp2.data.remote.PartidasApi
 import edu.ucne.RegistroJugadorAp2.domain.model.Jugador
-import edu.ucne.RegistroJugadorAp2.domain.model.MovimientoDto
 import edu.ucne.RegistroJugadorAp2.domain.usecase.ObserveJugadorUseCase
 import edu.ucne.RegistroJugadorAp2.domain.usecasepartida.InsertPartidaUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,16 +23,18 @@ data class GameUiState(
     val player1Id: Int? = null,
     val player2Id: Int? = null,
     val currentPlayerId: Int? = null,
-    val board: List<Int?> = List(9) { null }, // cada celda guarda jugadorId o null
+    val board: List<Int?> = List(9) { null },
     val winnerId: Int? = null,
     val isDraw: Boolean = false,
     val gameStarted: Boolean = false
+
 )
 @HiltViewModel
 class GameViewModel @Inject constructor(
     private val observeJugadoresUseCase: ObserveJugadorUseCase,
     private val insertPartidaUseCase: InsertPartidaUseCase,
-    private val movimientosApi: MovimientosApi
+    private val movimientosApi: MovimientosApi,
+    private val partidasApi: PartidasApi
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(GameUiState())
@@ -61,7 +63,7 @@ class GameViewModel @Inject constructor(
         val s = state.value
         val p1 = s.player1Id
         val p2 = s.player2Id
-        if (p1 == null || p2 == null || p1 == p2) return // no iniciar
+        if (p1 == null || p2 == null || p1 == p2) return
         _state.update {
             it.copy(
                 board = List(9) { null },
@@ -157,46 +159,25 @@ class GameViewModel @Inject constructor(
             }
         }
     }
-    fun cargarMovimientosDesdeApi() {
+
+    fun cargarMovimientosDesdeApi(partidaId: Int) {
         viewModelScope.launch {
             try {
-                val movimientos = movimientosApi.getMovimientos()
+                val movimientos = movimientosApi.getMovimientos(partidaId)
 
-                val nuevoTablero = Array(3) { Array(3) { "" } }
+                val tableroTemporal = Array(3) { Array(3) { "" } }
 
                 movimientos.forEach { movimiento ->
-                    val fila = movimiento.posicionFila
-                    val columna = movimiento.posicionColumna
-
-                    if (fila in 0..2 && columna in 0..2) {
-                        nuevoTablero[fila][columna] = movimiento.jugador
+                    val jugador = if (movimiento.jugador == "X") "X" else "O"
+                    if (movimiento.posicionFila in 0..2 && movimiento.posicionColumna in 0..2) {
+                        tableroTemporal[movimiento.posicionFila][movimiento.posicionColumna] = jugador
                     }
                 }
 
-                _tablero.value = nuevoTablero
+                _tablero.value = tableroTemporal
 
             } catch (e: Exception) {
-                Log.e("GameViewModel", "Error al cargar movimientos", e)
-            }
-        }
-    }
-
-
-    fun enviarMovimiento(jugador: String, fila: Int, columna: Int) {
-        viewModelScope.launch {
-            try {
-                val nuevoMovimiento = MovimientoDto(
-                    movimientoId = 0,
-                    jugador = jugador,
-                    posicionFila = fila,
-                    posicionColumna = columna
-                )
-
-                movimientosApi.postMovimiento(nuevoMovimiento)
-                cargarMovimientosDesdeApi()
-
-            } catch (e: Exception) {
-                Log.e("GameViewModel", "Error al enviar movimiento", e)
+                Log.e("API", "Error cargando movimientos", e)
             }
         }
     }

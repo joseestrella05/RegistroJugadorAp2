@@ -3,6 +3,9 @@ package edu.ucne.RegistroJugadorAp2.presentation.tictactoe
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -10,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.mutableStateOf
@@ -19,72 +21,94 @@ import androidx.compose.runtime.setValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import edu.ucne.RegistroJugadorAp2.domain.model.Jugador
-import edu.ucne.RegistroJugadorAp2.ui.theme.RegistroJugadorAp2Theme
-import kotlin.text.get
 
 
 @Composable
 fun TicTacToeScreen(
     viewModel: GameViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val tablero by viewModel.tablero.collectAsStateWithLifecycle() // <- Nuevo
+    val tablero by viewModel.tablero.collectAsStateWithLifecycle()
+    val partidaIdState = remember { mutableStateOf("") }
 
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            Button(onClick = { viewModel.cargarMovimientosDesdeApi() }) {
-                Text("Cargar API")
-            }
-        }
-
-        tablero.forEachIndexed { filaIndex, fila ->
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                fila.forEachIndexed { colIndex, valor ->
-                    Box(
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextField(
+                        value = partidaIdState.value,
+                        onValueChange = { partidaIdState.value = it },
+                        label = { Text("ID partida") },
                         modifier = Modifier
-                            .size(80.dp)
-                            .padding(4.dp)
-                            .background(Color.LightGray)
-                            .clickable {
-                                if (valor.isEmpty()) {
-                                    viewModel.enviarMovimiento("X", filaIndex, colIndex) // <- POST aquí
-                                }
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = valor,
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = when (valor) {
-                                "X" -> Color(0xFF0D47A1)
-                                "O" -> Color(0xFFD32F2F)
-                                else -> Color.Black
+                            .width(200.dp)
+                            .height(56.dp)
+                    )
+
+                    IconButton(
+                        onClick = {
+                            val id = partidaIdState.value.toIntOrNull()
+                            if (id != null) {
+                                viewModel.cargarMovimientosDesdeApi(id)
                             }
+                        },
+                        modifier = Modifier.padding(start = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Recargar partida",
+                            tint = MaterialTheme.colorScheme.onBackground
                         )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    tablero.forEach { fila ->
+                        Row {
+                            fila.forEach { valor ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(100.dp)
+                                        .padding(4.dp)
+                                        .background(
+                                            color = Color.LightGray,
+                                            shape = RoundedCornerShape(4.dp)
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = valor,
+                                        fontSize = 40.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = when (valor) {
+                                            "X" -> Color(0xFF0D47A1)
+                                            "O" -> Color(0xFFD32F2F)
+                                            else -> MaterialTheme.colorScheme.onSurface
+                                        }
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
     }
-
-    TicTacToeBody(
-        state = state,
-        jugadores = state.jugadores,
-        onSelectPlayer1 = { viewModel.selectPlayer1(it) },
-        onSelectPlayer2 = { viewModel.selectPlayer2(it) },
-        startGame = viewModel::startGame,
-        onCellClick = viewModel::onCellClick,
-        restartGame = viewModel::restartGame
-    )
 }
+
 
 @Composable
 private fun TicTacToeBody(
@@ -98,6 +122,8 @@ private fun TicTacToeBody(
 ) {
     val jugadoresMap = remember(jugadores) { jugadores.associateBy { it.jugadorId } }
 
+    val mostrarTableroDesdeApi = state.board.any { it != null }
+
     Scaffold { padding ->
         Column(
             modifier = Modifier
@@ -107,7 +133,14 @@ private fun TicTacToeBody(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            if (!state.gameStarted) {
+            if (state.gameStarted || mostrarTableroDesdeApi) {
+                GameBoard(
+                    uiState = state,
+                    jugadores = jugadores,
+                    onCellClick = onCellClick,
+                    onRestartGame = restartGame
+                )
+            } else {
                 PlayerSelectionScreen(
                     jugadores = jugadores,
                     player1 = state.player1Id?.let { jugadoresMap[it] },
@@ -115,13 +148,6 @@ private fun TicTacToeBody(
                     onPlayer1Selected = onSelectPlayer1,
                     onPlayer2Selected = onSelectPlayer2,
                     onStartGame = startGame
-                )
-            } else {
-                GameBoard(
-                    uiState = state,
-                    jugadores = jugadores,
-                    onCellClick = onCellClick,
-                    onRestartGame = restartGame
                 )
             }
         }
@@ -330,22 +356,3 @@ private fun BoardCell(
 }
 
 
-@Preview(showBackground = true)
-@Composable
-fun BoardPreview() {
-    val demoPlayers = listOf(
-        Jugador(jugadorId = 1, nombres = "Ana Pérez", partidas = 0),
-        Jugador(jugadorId = 2, nombres = "Luis Gomez", partidas = 0)
-    )
-    RegistroJugadorAp2Theme {
-        TicTacToeBody(
-            state = GameUiState(jugadores = demoPlayers),
-            jugadores = demoPlayers,
-            onSelectPlayer1 = {},
-            onSelectPlayer2 = {},
-            startGame = {},
-            onCellClick = {},
-            restartGame = {}
-        )
-    }
-}
